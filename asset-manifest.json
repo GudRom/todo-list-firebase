@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/todo-list-firebase/static/css/main.02a2e1fd.css",
+    "main.js": "/todo-list-firebase/static/js/main.5ff535a4.js",
+    "index.html": "/todo-list-firebase/index.html",
+    "main.02a2e1fd.css.map": "/todo-list-firebase/static/css/main.02a2e1fd.css.map",
+    "main.5ff535a4.js.map": "/todo-list-firebase/static/js/main.5ff535a4.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.02a2e1fd.css",
+    "static/js/main.5ff535a4.js"
+  ]
+}
