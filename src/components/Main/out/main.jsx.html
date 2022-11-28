@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: main.jsx</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: main.jsx</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useState, useContext, useEffect } from "react";
+import { Context } from "../..";
+import Popup from "../Popup/Popup";
+import TaskList from "../TaskList/TaskList";
+import "./Main.css";
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  orderBy,
+  query,
+  onSnapshot,
+} from "firebase/firestore";
+import Loader from "../Loader/Loader";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
+
+function Main() {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isEditPopup, setIsEditPopup] = useState(false);
+  const [isTaskDone, setIsTaskDone] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [date, setDate] = useState("");
+  const [taskId, setTaskId] = useState("");
+  const [filesURL, setFilesURL] = useState("");
+  const [fileName, setFileName] = useState(null);
+
+  const { db, storage } = useContext(Context);
+  const tasksCollection = collection(db, "tasks");
+
+  useEffect(() => {
+    getTasks();
+    // eslint-disable-next-line
+  }, []);
+
+  /**
+   * Функция получения задач из БД
+   * Делаем запрос к БД и записываем данные в стейт.
+   */
+  const getTasks = () => {
+    setIsLoading(true);
+    const que = query(tasksCollection, orderBy("createdAt", "desc"));
+    const data = onSnapshot(
+      que,
+      (querySnapshot) => {
+        const items = [];
+        querySnapshot.forEach((doc) => {
+          items.push({ ...doc.data(), id: doc.id });
+        });
+        setTasks(items);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error("Error geting document: ", error);
+      }
+    );
+    return () => {
+      data();
+    };
+  };
+
+  /**
+   * Функция создания задачи в БД
+   * @param {string} title - заголовок задачи
+   * @param {string} text - описание задачи
+   * @param {string} date - дата выполнения задачи
+   * @param {boolean} isTaskDone - состояние чекбокса (выполнена задача или нет)
+   * @param {string} filesURL - сгенерированная ссылка на файл в Firebase Storage
+   * @param {string} fileName - имя файла, в дальнейшем успользуется для удаления конкретного файла
+   */
+  const addTask = async (title, text, date) => {
+    try {
+      await addDoc(tasksCollection, {
+        title,
+        text,
+        isTaskDone,
+        date,
+        filesURL,
+        fileName,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  };
+
+  /**
+   * Функция обновления выполнения задачи в БД
+   * @param {string} id - id задачи, нужна для правильного составления запроса на обновление состояния задачи
+   * Передаем id для индетефикации задачи в БД
+   * Получаем измененное состояние задачи
+   */
+  const updateTaskDone = async (id) => {
+    setIsTaskDone(!isTaskDone);
+    try {
+      const taskDoc = doc(db, "tasks", id);
+      await updateDoc(taskDoc, {
+        isTaskDone,
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
+  };
+
+  /**
+   * Функция обновления данных задачи в БД
+   * @param {string} id - id задачи, нужна для правильного составления запроса на обновление данных задачи
+   * Передаем id для индетефикации задачи в БД, также передаем остальные данные из формы редактирования
+   */
+  const updateTask = async (id) => {
+    try {
+      const taskDoc = doc(db, "tasks", id);
+      await updateDoc(taskDoc, {
+        title,
+        text,
+        date,
+        filesURL,
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+    }
+  };
+
+  /**
+   * Функция удаления задачи из БД
+   * @param {string} id - id задачи, нужна для правильного составления запроса на удаление задачи
+   * @param {string} name - имя файла, передаем в функцию удаления в файла
+   */
+  const deleteTask = async (name, id) => {
+    try {
+      deleteFile(name);
+      const taskDoc = doc(db, "tasks", id);
+      await deleteDoc(taskDoc);
+    } catch (error) {
+      console.error("Error deleting document: ", error);
+    }
+  };
+
+  /**
+   * Функция открытия формы редактирования задачи
+   * @param {string} title - заголовок задачи
+   * @param {string} text - описание задачи
+   * @param {string} date - дата выполнения задачи
+   * @param {string} id - id задачи
+   * Перед открытием попапа, предварительно заполняем поля
+   */
+  const editTask = (title, text, date, id) => {
+    setIsEditPopup(true);
+    setTitle(title);
+    setText(text);
+    setDate(date);
+    setTaskId(id);
+    setIsPopupOpen(true);
+  };
+
+  /**
+   * Функция закрытия попапа
+   */
+  const closePopup = () => {
+    setIsPopupOpen(false);
+    setFilesURL("");
+    if (isEditPopup) {
+      setTitle("");
+      setText("");
+      setDate("");
+      setTaskId("");
+      setIsEditPopup(false);
+    }
+  };
+
+  /**
+   * Функция загрузки файлов в Firebase Storage
+   * @param {object} e - событие, сробатывающее при добавлении файла в input
+   * В случае успешного выполнения получаем ссылку на файл и фиксируем в стейте filesURl
+   * Результат выполнения выводится в консоль
+   */
+  const uploadImages = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFileName(file.name);
+    const storageRef = ref(storage, file.name);
+
+    uploadBytes(storageRef, file)
+      .then((snapshot) => {
+        console.log("Uploaded a blob or file!");
+      })
+      .then(() => {
+        getDownloadURL(storageRef)
+          .then((url) => {
+            setFilesURL(url);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+  /**
+   * Функция удаления файла из Firebase Storage
+   * @param {string} name - имя файла, нужно для правильного составления запроса на удаление файла из хранилища
+   * Результат выполнения выводится в консоль
+   */
+  const deleteFile = (name) => {
+    if (!name) return;
+    const storageRef = ref(storage, name);
+    deleteObject(storageRef)
+      .then(() => {
+        console.log("done");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
+  return (
+    &lt;main className="main">
+      &lt;h1 className="main__title">Дела-дела:&lt;/h1>
+      &lt;button className="main__add-btn" onClick={() => setIsPopupOpen(true)}>
+        Добавить
+      &lt;/button>
+      {isLoading ? &lt;Loader /> : null}
+      {tasks.length ? (
+        &lt;TaskList
+          tasks={tasks}
+          updateTaskDone={updateTaskDone}
+          deleteTask={deleteTask}
+          editTask={editTask}
+        />
+      ) : (
+        &lt;p>Добавь задачу&lt;/p>
+      )}
+      &lt;Popup
+        isPopupOpen={isPopupOpen}
+        setIsPopupOpen={setIsPopupOpen}
+        addTask={addTask}
+        tasks={tasks}
+        title={title}
+        setTitle={setTitle}
+        text={text}
+        setText={setText}
+        date={date}
+        setDate={setDate}
+        updateTask={updateTask}
+        closePopup={closePopup}
+        isEditPopup={isEditPopup}
+        setIsEditPopup={setIsEditPopup}
+        taskId={taskId}
+        setTaskId={setTaskId}
+        setFilesURL={setFilesURL}
+        uploadImages={uploadImages}
+      />
+    &lt;/main>
+  );
+}
+
+export default Main;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.0</a> on Mon Nov 28 2022 22:06:37 GMT+0300 (Москва, стандартное время)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

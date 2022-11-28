@@ -1,0 +1,94 @@
+.task {
+  margin-bottom: 10px;
+}
+
+.task__block {
+  border: 1px solid #155799;
+  border-radius: 5px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.task__block_done {
+  border: 2px #159957 solid;
+  opacity: .5;
+}
+
+.task__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  background-color: cornsilk;
+  padding: 2px 20px;
+}
+
+.task__checkbox {
+  width: 20px;
+  height: 20px;
+}
+
+.task__text-block {
+  text-align: center;
+}
+
+.task__title {
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 600;
+  margin: 0;
+}
+
+.task__text {
+  font-size: 16px;
+  margin: 10px;
+}
+
+.task__time {
+  margin: 0;
+  font-size: 12px;
+  color: darkslategrey;
+}
+
+.task__time_red {
+  color: red;
+  text-decoration: underline;
+}
+
+.task__button-block {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.task__btn {
+  background-color: transparent;
+  border: none;
+  margin-left: 10px;
+}
+
+.task__btn_dlt {
+  color: rgb(245, 55, 55);
+}
+
+.task__btn:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+.task__checkbox:hover {
+  cursor: pointer;
+}
+
+.task__details {
+  padding: 10px 20px;
+}
+
+.task__image {
+  height: 200px;
+  width: 150px;
+  background-position: center;
+  margin: 15px 0 0 30px;
+  filter: drop-shadow(4px 4px 8px black);
+}

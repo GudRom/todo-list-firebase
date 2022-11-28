@@ -1,0 +1,50 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form__input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px rgb(51, 50, 50) solid;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    padding: 5px;
+    background-color: transparent;
+}
+
+.form__input:focus {
+    border-color: goldenrod;
+    outline: none;
+}
+
+.form__input_title {
+    text-align: center;
+    font-size: 14px;
+    border: none;
+    border-bottom: 1px rgb(51, 50, 50) solid;
+    border-radius: 0;
+}
+
+.form__input_description {
+    resize: none;
+}
+
+.form__input_datetime {
+}
+
+.form__input-file {
+    margin-bottom: 20px;
+}
+
+.form__save-btn {
+  background-color: transparent;
+  border: none;
+}
+
+.form__save-btn:hover {
+  cursor: pointer;
+  color: #159957;
+}

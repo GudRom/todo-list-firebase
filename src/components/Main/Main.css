@@ -1,0 +1,25 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main__title {
+  font-size: 30px;
+  line-height: 1.2;
+  color: #2b2c3b;
+}
+
+.main__add-btn {
+  background-color: #159957;
+  border: 1px solid #155799;
+  color: whitesmoke;
+  border-radius: 0.7em;
+  font-size: 20px;
+  padding: 0.3em 0.7em;
+}
+
+.main__add-btn:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
